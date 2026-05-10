@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS — Student Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24; --border: #2a2a38;
+    --accent: #7c5cfc; --accent2: #fc5c7d; --accent3: #5cfcb4;
+    --text: #e8e8f0; --muted: #6b6b80;
+    --success: #5cfcb4; --warning: #fcb45c; --danger: #fc5c7d;
+    --radius: 14px; --font-mono: 'Space Mono', monospace; --font-sans: 'Syne', sans-serif;
+    --shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(0,0,0,0.4);
+    --glow: 0 0 20px rgba(124,92,252,0.3);
+  }
+  [data-theme="light"] {
+    --bg: #f0eff8; --surface: #ffffff; --surface2: #eeedf8; --border: #d4d2ec;
+    --text: #1a1a2e; --muted: #7a7a9a;
+    --shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(100,80,200,0.1);
+    --glow: 0 0 20px rgba(124,92,252,0.15);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font-sans); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; transition:background 0.3s,color 0.3s; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px); background-size:48px 48px; opacity:0.3; pointer-events:none; z-index:0; }
+  .app { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:24px; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon { width:40px; height:40px; background:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:var(--glow); }
+  .logo-text { font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+  .logo-text span { color:var(--accent); }
+  .hdr-right { display:flex; align-items:center; gap:14px; }
+  .date-chip { font-family:var(--font-mono); font-size:11px; color:var(--muted); background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:20px; }
+  .icon-btn { width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .icon-btn:hover { background:var(--surface2); border-color:var(--accent); }
+  .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; box-shadow:var(--shadow); position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; }
+  .stat-card:hover { transform:translateY(-2px); box-shadow:var(--shadow),var(--glow); }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .stat-card:nth-child(1)::before { background:var(--accent); }
+  .stat-card:nth-child(2)::before { background:var(--accent2); }
+  .stat-card:nth-child(3)::before { background:var(--accent3); }
+  .stat-card:nth-child(4)::before { background:var(--warning); }
+  .stat-label { font-size:10px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:6px; }
+  .stat-value { font-size:28px; font-weight:800; line-height:1; margin-bottom:4px; }
+  .stat-sub { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
+  .main-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; }
+  .left-col,.right-col { display:flex; flex-direction:column; gap:20px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .card-header { padding:18px 22px 0; display:flex; align-items:center; justify-content:space-between; }
+  .card-title { font-size:13px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  .card-body { padding:18px 22px 22px; }
+  .pomo-wrap { padding:28px 22px 24px; text-align:center; }
+  .mode-tabs { display:flex; background:var(--surface2); border-radius:10px; padding:4px; gap:4px; margin-bottom:28px; }
+  .mode-tab { flex:1; padding:7px; font-family:var(--font-mono); font-size:11px; border-radius:7px; border:none; background:transparent; color:var(--muted); cursor:pointer; transition:all 0.2s; letter-spacing:0.5px; }
+  .mode-tab.active { background:var(--accent); color:white; box-shadow:0 2px 8px rgba(124,92,252,0.4); }
+  .timer-ring { position:relative; width:180px; height:180px; margin:0 auto 24px; }
+  .timer-ring svg { position:absolute; top:0; left:0; transform:rotate(-90deg); }
+  .timer-ring circle { fill:none; stroke-width:6; stroke-linecap:round; }
+  .ring-bg { stroke:var(--border); }
+  .ring-prog { stroke:var(--accent); stroke-dasharray:503; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear,stroke 0.3s; filter:drop-shadow(0 0 6px rgba(124,92,252,0.6)); }
+  .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .timer-display { font-family:var(--font-mono); font-size:36px; font-weight:700; letter-spacing:-1px; line-height:1; }
+  .timer-phase { font-size:9px; font-family:var(--font-mono); color:var(--muted); letter-spacing:2px; margin-top:4px; text-transform:uppercase; }
+  .timer-controls { display:flex; gap:10px; justify-content:center; margin-bottom:16px; }
+  .btn { border:none; border-radius:10px; cursor:pointer; font-family:var(--font-sans); font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+  .btn-primary { background:var(--accent); color:white; padding:11px 28px; font-size:14px; box-shadow:0 4px 16px rgba(124,92,252,0.35); }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,92,252,0.5); }
+  .btn-secondary { background:var(--surface2); color:var(--text); padding:11px 18px; font-size:14px; border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--accent); }
+  .pomo-count { font-family:var(--font-mono); font-size:11px; color:var(--muted); }
+  .pomo-dots { display:flex; justify-content:center; gap:6px; margin-top:6px; }
+  .pomo-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:all 0.3s; }
+  .pomo-dot.filled { background:var(--accent); box-shadow:0 0 8px rgba(124,92,252,0.5); }
+  .week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:16px; }
+  .day-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .day-label { font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; }
+  .day-bar-wrap { width:100%; height:80px; background:var(--surface2); border-radius:6px; position:relative; overflow:hidden; border:1px solid var(--border); }
+  .day-bar { position:absolute; bottom:0; left:0; right:0; border-radius:6px 6px 0 0; transition:height 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+  .day-bar.today { box-shadow:0 0 10px rgba(124,92,252,0.5); }
+  .day-hours { font-family:var(--font-mono); font-size:9px; color:var(--muted); }
+  .row { display:flex; gap:10px; }
+  .input { background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--font-sans); font-size:13px; padding:9px 14px; outline:none; transition:border-color 0.2s; width:100%; }
+  .input:focus { border-color:var(--accent); }
+  .input::placeholder { color:var(--muted); }
+  select.input { cursor:pointer; }
+  .btn-add { background:var(--accent); color:white; border:none; border-radius:10px; padding:9px 18px; font-size:14px; font-family:var(--font-sans); font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.2s; flex-shrink:0; }
+  .btn-add:hover { opacity:0.85; }
+  .att-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .subj-row { background:var(--surface2); border-radius:10px; padding:14px 16px; border:1px solid var(--border); }
+  .subj-name { font-size:13px; font-weight:700; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .att-bar-wrap { height:5px; background:var(--border); border-radius:3px; margin-bottom:6px; overflow:hidden; }
+  .att-bar { height:100%; border-radius:3px; transition:width 0.5s ease; }
+  .att-pct { font-family:var(--font-mono); font-size:10px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+  .btn-present { background:rgba(92,252,180,0.1); color:var(--success); border:1px solid rgba(92,252,180,0.3); border-radius:8px; padding:9px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:all 0.2s; }
+  .btn-present:hover { background:rgba(92,252,180,0.2); }
+  .btn-absent { background:rgba(252,92,125,0.1); color:var(--danger); border:1px solid rgba(252,92,125,0.3); border-radius:8px; padding:9px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:all 0.2s; }
+  .btn-absent:hover { background:rgba(252,92,125,0.2); }
+  .task-list { display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto; }
+  .task-list::-webkit-scrollbar { width:4px; }
+  .task-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .task-item { display:flex; align-items:center; gap:12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; transition:all 0.2s; animation:slideIn 0.3s ease; cursor:pointer; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .task-item:hover { border-color:var(--accent); }
+  .task-item.done { opacity:0.5; }
+  .task-item.done .task-text { text-decoration:line-through; color:var(--muted); }
+  .task-check { width:18px; height:18px; border-radius:5px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; font-size:10px; }
+  .task-item.done .task-check { background:var(--accent3); border-color:var(--accent3); color:#0a0a0f; }
+  .task-text { flex:1; font-size:13px; }
+  .task-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .p-high { background:var(--danger); } .p-mid { background:var(--warning); } .p-low { background:var(--accent3); }
+  .task-del { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 4px; border-radius:4px; transition:all 0.2s; flex-shrink:0; }
+  .task-del:hover { color:var(--danger); background:rgba(252,92,125,0.1); }
+  .pri-picker { display:flex; gap:6px; align-items:center; }
+  .pri-opt { width:18px; height:18px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:all 0.15s; }
+  .pri-opt:hover,.pri-opt.sel { border-color:var(--text); transform:scale(1.2); }
+  .pri-opt.ph { background:var(--danger); } .pri-opt.pm { background:var(--warning); } .pri-opt.pl { background:var(--accent3); }
+  .goal-ring-wrap { display:flex; flex-direction:column; align-items:center; padding:20px 22px 22px; }
+  .goal-ring { position:relative; width:120px; height:120px; margin-bottom:14px; }
+  .goal-ring svg { transform:rotate(-90deg); }
+  .goal-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .goal-pct { font-size:26px; font-weight:800; }
+  .goal-pct-lbl { font-size:9px; font-family:var(--font-mono); color:var(--muted); letter-spacing:1px; }
+  .goal-txt { font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); text-align:center; }
+  .quote-card { background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(252,92,125,0.1)); border:1px solid rgba(124,92,252,0.3); border-radius:var(--radius); padding:22px; position:relative; overflow:hidden; }
+  .quote-card::before { content:'"'; position:absolute; top:-10px; left:10px; font-size:120px; color:rgba(124,92,252,0.1); font-family:Georgia,serif; line-height:1; pointer-events:none; }
+  .quote-text { font-size:15px; font-weight:600; line-height:1.6; margin-bottom:12px; position:relative; font-style:italic; }
+  .quote-author { font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:1px; }
+  .quote-refresh { position:absolute; top:16px; right:16px; background:rgba(124,92,252,0.15); border:1px solid rgba(124,92,252,0.2); color:var(--accent); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; transition:all 0.2s; }
+  .quote-refresh:hover { background:rgba(124,92,252,0.25); }
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--accent); border-radius:12px; padding:14px 20px; font-size:14px; font-weight:600; box-shadow:var(--shadow),0 0 20px rgba(124,92,252,0.2); z-index:1000; transform:translateY(80px); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); display:flex; align-items:center; gap:10px; max-width:300px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .empty-msg { text-align:center; color:var(--muted); font-size:13px; padding:20px; font-family:var(--font-mono); }
+  @media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+  @media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}.att-grid{grid-template-columns:1fr}.app{padding:14px}}
+  *{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">Study<span>OS</span></div>
+    </div>
+    <div class="hdr-right">
+      <div class="date-chip" id="dateChip"></div>
+      <button class="icon-btn" id="resetBtn" title="Reset all data">🗑️</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-label">Today's Study</div><div class="stat-value" id="statToday">0h</div><div class="stat-sub">logged today</div></div>
+    <div class="stat-card"><div class="stat-label">Week Total</div><div class="stat-value" id="statWeek">0h</div><div class="stat-sub">/ 20h goal</div></div>
+    <div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value" id="statTasks">0/0</div><div class="stat-sub" id="statTasksSub">add some tasks!</div></div>
+    <div class="stat-card"><div class="stat-label">Pomodoros</div><div class="stat-value" id="statPomos">0</div><div class="stat-sub">sessions today</div></div>
+  </div>
+
+  <div class="main-grid">
+    <div class="left-col">
+
+      <!-- STUDY LOG -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Weekly Study Log</div>
+          <span style="font-size:11px;font-family:var(--font-mono);color:var(--muted)">Goal: 20h/week</span>
+        </div>
+        <div class="card-body">
+          <div class="week-grid" id="weekGrid"></div>
+          <div class="row" style="margin-top:8px">
+            <select class="input" id="studySubj" style="max-width:160px">
+              <option value="">Subject...</option>
+              <option>Math</option><option>Science</option><option>English</option>
+              <option>History</option><option>Programming</option><option>Other</option>
+            </select>
+            <input class="input" type="number" id="studyHrs" placeholder="Hours (e.g. 1.5)" min="0.25" max="12" step="0.25">
+            <button class="btn-add" id="logBtn">+ Log</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Attendance Tracker</div>
+          <button class="btn-add" id="addSubjBtn" style="padding:5px 12px;font-size:12px">+ Subject</button>
+        </div>
+        <div class="card-body">
+          <div class="att-grid" id="attGrid"></div>
+          <div class="row" id="addSubjRow" style="display:none;margin-bottom:10px">
+            <input class="input" id="newSubjName" placeholder="Subject name...">
+            <button class="btn-present" id="saveSubjBtn">Add</button>
+            <button class="btn-absent" id="cancelSubjBtn">✕</button>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <select class="input" id="attSubj"><option value="">Select subject...</option></select>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn-present" id="markPresent">✓ Present</button>
+              <button class="btn-absent" id="markAbsent">✗ Absent</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background:var(--warning)"></span>Tasks & Goals</div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--muted)" id="taskProg">0/0 done</div>
+        </div>
+        <div class="card-body">
+          <div class="row" style="margin-bottom:14px">
+            <input class="input" id="newTask" placeholder="Add a task or goal..." style="flex:1">
+            <div class="pri-picker">
+              <div class="pri-opt ph" data-p="high" title="High"></div>
+              <div class="pri-opt pm sel" data-p="mid" title="Med"></div>
+              <div class="pri-opt pl" data-p="low" title="Low"></div>
+            </div>
+            <button class="btn-add" id="addTaskBtn">+ Add</button>
+          </div>
+          <div class="task-list" id="taskList"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="right-col">
+
+      <!-- POMODORO -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="dot"></span>Pomodoro Timer</div></div>
+        <div class="pomo-wrap">
+          <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="focus" data-mins="25">Focus</button>
+            <button class="mode-tab" data-mode="short" data-mins="5">Short Break</button>
+            <button class="mode-tab" data-mode="long" data-mins="15">Long Break</button>
+          </div>
+          <div class="timer-ring">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle class="ring-bg" cx="90" cy="90" r="80"/>
+              <circle class="ring-prog" id="ringProg" cx="90" cy="90" r="80"/>
+            </svg>
+            <div class="timer-center">
+              <div class="timer-display" id="timerDisp">25:00</div>
+              <div class="timer-phase" id="timerPhase">READY</div>
+            </div>
+          </div>
+          <div class="timer-controls">
+            <button class="btn btn-primary" id="timerStart">▶ Start</button>
+            <button class="btn btn-secondary" id="timerReset">↺ Reset</button>
+          </div>
+          <div class="pomo-count">Completed today</div>
+          <div class="pomo-dots" id="pomoDots">
+            <div class="pomo-dot"></div><div class="pomo-dot"></div>
+            <div class="pomo-dot"></div><div class="pomo-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GOAL RING -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Goal Progress</div></div>
+        <div class="goal-ring-wrap">
+          <div class="goal-ring">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle fill="none" stroke="var(--border)" stroke-width="8" cx="60" cy="60" r="50"/>
+              <circle id="goalRing" fill="none" stroke="var(--accent3)" stroke-width="8" stroke-linecap="round"
+                cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"
+                style="transition:stroke-dashoffset 0.8s ease;filter:drop-shadow(0 0 6px rgba(92,252,180,0.5))"/>
+            </svg>
+            <div class="goal-ring-center">
+              <div class="goal-pct" id="goalPct">0%</div>
+              <div class="goal-pct-lbl">tasks</div>
+            </div>
+          </div>
+          <div class="goal-txt" id="goalTxt">Complete tasks to grow</div>
+        </div>
+      </div>
+
+      <!-- QUOTE -->
+      <div class="quote-card">
+        <button class="quote-refresh" id="quoteRefresh">↻</button>
+        <div class="quote-text" id="quoteText">The secret of getting ahead is getting started.</div>
+        <div class="quote-author" id="quoteAuthor">— Mark Twain</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastIcon">🎉</span>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script>
+// ── QUOTES ──
+const QUOTES = [
+  {text:"The secret of getting ahead is getting started.",author:"Mark Twain"},
+  {text:"It does not matter how slowly you go as long as you do not stop.",author:"Confucius"},
+  {text:"Success is the sum of small efforts repeated day in and day out.",author:"Robert Collier"},
+  {text:"Don't watch the clock; do what it does. Keep going.",author:"Sam Levenson"},
+  {text:"Education is the most powerful weapon you can use to change the world.",author:"Nelson Mandela"},
+  {text:"The beautiful thing about learning is that no one can take it away from you.",author:"B.B. King"},
+  {text:"Believe you can and you're halfway there.",author:"Theodore Roosevelt"},
+  {text:"Push yourself because no one else is going to do it for you.",author:"Unknown"},
+  {text:"An investment in knowledge pays the best interest.",author:"Benjamin Franklin"},
+  {text:"The expert in anything was once a beginner.",author:"Helen Hayes"},
+  {text:"Study hard what interests you in the most undisciplined way possible.",author:"Richard Feynman"},
+  {text:"You don't have to be great to start, but you have to start to be great.",author:"Zig Ziglar"},
+];
+
+// ── STORAGE (artifact persistent API) ──
+async function sGet(k){try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}catch{return null;}}
+async function sSet(k,v){try{await window.storage.set(k,JSON.stringify(v));}catch{}}
+async function sDel(k){try{await window.storage.delete(k);}catch{}}
+
+// ── HELPERS ──
+const todayKey=()=>new Date().toISOString().split('T')[0];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function weekDates(){const n=new Date(),d=n.getDay();return Array.from({length:7},(_,i)=>{const x=new Date(n);x.setDate(n.getDate()-d+i);return x.toISOString().split('T')[0];});}
+
+// ── STATE (always blank on load) ──
+let S={studyLog:{},attendance:[],tasks:[],pomos:{date:todayKey(),count:0},theme:'dark'};
+
+// ── TOAST ──
+let _tt;
+function toast(msg,icon='🎉'){
+  clearTimeout(_tt);
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastIcon').textContent=icon;
+  const t=document.getElementById('toast');t.classList.add('show');
+  _tt=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── STATS ──
+function updateStats(){
+  const today=S.studyLog[todayKey()]||0;
+  const week=weekDates().reduce((a,d)=>a+(S.studyLog[d]||0),0);
+  const done=S.tasks.filter(t=>t.done).length,total=S.tasks.length;
+  const fmt=h=>h%1===0?h+'h':h.toFixed(1)+'h';
+  document.getElementById('statToday').textContent=fmt(today);
+  document.getElementById('statWeek').textContent=fmt(week);
+  document.getElementById('statTasks').textContent=`${done}/${total}`;
+  document.getElementById('statTasksSub').textContent=done===total&&total>0?'🎉 all done!':total===0?'add some tasks!':'keep going!';
+  document.getElementById('statPomos').textContent=S.pomos.count;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('goalPct').textContent=pct+'%';
+  document.getElementById('goalRing').style.strokeDashoffset=314-(314*pct/100);
+  document.getElementById('goalTxt').textContent=pct===100?'🎉 All goals complete!':pct>0?`${done} of ${total} tasks complete`:'Complete tasks to grow';
+}
+
+// ── STUDY LOG ──
+function renderStudy(){
+  const dates=weekDates(),today=todayKey(),max=Math.max(8,...dates.map(d=>S.studyLog[d]||0));
+  document.getElementById('weekGrid').innerHTML=dates.map((d,i)=>{
+    const h=S.studyLog[d]||0,pct=Math.round(h/max*100),isT=d===today;
+    const bar=isT?'linear-gradient(to top,var(--accent),rgba(124,92,252,0.5))':h>0?'linear-gradient(to top,var(--muted),rgba(107,107,128,0.3))':'var(--border)';
+    return `<div class="day-col">
+      <div class="day-label" style="${isT?'color:var(--accent);font-weight:700':''}">${DAYS[i]}</div>
+      <div class="day-bar-wrap"><div class="day-bar${isT?' today':''}" style="height:${pct}%;background:${bar}"></div></div>
+      <div class="day-hours">${h>0?(h%1===0?h:h.toFixed(1))+'h':'—'}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('logBtn').addEventListener('click',async()=>{
+  const subj=document.getElementById('studySubj').value;
+  const h=parseFloat(document.getElementById('studyHrs').value);
+  if(!h||h<=0){toast('Enter valid hours','⚠️');return;}
+  const k=todayKey();S.studyLog[k]=(S.studyLog[k]||0)+h;
+  await sSet('studyLog',S.studyLog);
+  document.getElementById('studyHrs').value='';document.getElementById('studySubj').value='';
+  renderStudy();updateStats();toast(`+${h}h logged${subj?' for '+subj:''}`, '📖');
+});
+
+// ── ATTENDANCE ──
+function renderAtt(){
+  const grid=document.getElementById('attGrid'),sel=document.getElementById('attSubj');
+  sel.innerHTML='<option value="">Select subject...</option>'+
+    S.attendance.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
+  if(!S.attendance.length){
+    grid.innerHTML=`<div class="empty-msg" style="grid-column:span 2">No subjects yet. Add one above ↑</div>`;return;
+  }
+  grid.innerHTML=S.attendance.map((s,i)=>{
+    const tot=s.present+s.absent,pct=tot>0?Math.round(s.present/tot*100):0;
+    const col=pct>=75?'var(--success)':pct>=60?'var(--warning)':'var(--danger)';
+    const status=pct>=75?'✓ Good':pct>=60?'⚠ Warn':'✗ Low';
+    return `<div class="subj-row">
+      <div class="subj-name">${s.name}</div>
+      <div class="att-bar-wrap"><div class="att-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="att-pct"><span>${s.present}P / ${s.absent}A</span><span style="color:${col};font-weight:700">${pct}%</span><span style="color:${col};font-size:9px">${status}</span></div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('addSubjBtn').addEventListener('click',()=>{
+  document.getElementById('addSubjRow').style.display='flex';
+  document.getElementById('newSubjName').focus();
+});
+document.getElementById('cancelSubjBtn').addEventListener('click',()=>{
+  document.getElementById('addSubjRow').style.display='none';
+  document.getElementById('newSubjName').value='';
+});
+document.getElementById('saveSubjBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('newSubjName').value.trim();if(!name)return;
+  S.attendance.push({name,present:0,absent:0});await sSet('attendance',S.attendance);
+  document.getElementById('addSubjRow').style.display='none';
+  document.getElementById('newSubjName').value='';
+  renderAtt();toast(`Added: ${name}`,'📋');
+});
+document.getElementById('markPresent').addEventListener('click',()=>markAtt(true));
+document.getElementById('markAbsent').addEventListener('click',()=>markAtt(false));
+async function markAtt(present){
+  const idx=parseInt(document.getElementById('attSubj').value);
+  if(isNaN(idx)){toast('Select a subject first','⚠️');return;}
+  if(present)S.attendance[idx].present++;else S.attendance[idx].absent++;
+  await sSet('attendance',S.attendance);renderAtt();
+  toast(present?'Marked present ✓':'Marked absent ✗',present?'✅':'❌');
+}
+
+// ── TASKS ──
+let selP='mid';
+document.querySelectorAll('.pri-opt').forEach(o=>o.addEventListener('click',()=>{
+  document.querySelectorAll('.pri-opt').forEach(x=>x.classList.remove('sel'));
+  o.classList.add('sel');selP=o.dataset.p;
+}));
+function renderTasks(){
+  const done=S.tasks.filter(t=>t.done).length;
+  document.getElementById('taskProg').textContent=`${done}/${S.tasks.length} done`;
+  const list=document.getElementById('taskList');
+  if(!S.tasks.length){list.innerHTML=`<div class="empty-msg">No tasks yet. Add one above ↑</div>`;return;}
+  const sorted=[...S.tasks].sort((a,b)=>{
+    if(a.done!==b.done)return a.done-b.done;
+    return {high:0,mid:1,low:2}[a.priority]-{high:0,mid:1,low:2}[b.priority];
+  });
+  list.innerHTML=sorted.map(t=>`
+    <div class="task-item${t.done?' done':''}" data-id="${t.id}">
+      <div class="task-check">${t.done?'✓':''}</div>
+      <div class="task-text">${t.text}</div>
+      <div class="task-dot p-${t.priority==='high'?'high':t.priority==='mid'?'mid':'low'}"></div>
+      <button class="task-del" data-del="${t.id}">✕</button>
+    </div>`).join('');
+  list.querySelectorAll('.task-item').forEach(el=>el.addEventListener('click',async e=>{
+    if(e.target.classList.contains('task-del'))return;
+    const task=S.tasks.find(t=>t.id===el.dataset.id);
+    if(task){task.done=!task.done;await sSet('tasks',S.tasks);renderTasks();updateStats();if(task.done)toast('Task complete! 💪','✅');}
+  }));
+  list.querySelectorAll('.task-del').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();S.tasks=S.tasks.filter(t=>t.id!==b.dataset.del);
+    await sSet('tasks',S.tasks);renderTasks();updateStats();
+  }));
+}
+document.getElementById('addTaskBtn').addEventListener('click',addTask);
+document.getElementById('newTask').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+async function addTask(){
+  const text=document.getElementById('newTask').value.trim();if(!text)return;
+  S.tasks.push({id:Date.now().toString(),text,done:false,priority:selP});
+  await sSet('tasks',S.tasks);document.getElementById('newTask').value='';renderTasks();updateStats();
+}
+
+// ── POMODORO ──
+const CIRC=2*Math.PI*80;
+let pomo={mode:'focus',total:25*60,rem:25*60,running:false,iv:null};
+function updateTimer(){
+  const m=String(Math.floor(pomo.rem/60)).padStart(2,'0'),s=String(pomo.rem%60).padStart(2,'0');
+  document.getElementById('timerDisp').textContent=`${m}:${s}`;
+  document.getElementById('ringProg').style.strokeDashoffset=CIRC*(1-pomo.rem/pomo.total);
+  document.getElementById('ringProg').style.stroke={focus:'var(--accent)',short:'var(--accent3)',long:'var(--warning)'}[pomo.mode];
+  document.getElementById('timerPhase').textContent=pomo.running?(pomo.mode==='focus'?'FOCUSING':'BREAK'):'READY';
+  document.getElementById('timerStart').textContent=pomo.running?'⏸ Pause':'▶ Start';
+}
+function updateDots(){
+  const dots=document.getElementById('pomoDots').children;
+  for(let i=0;i<dots.length;i++)dots[i].classList.toggle('filled',i<S.pomos.count%4);
+}
+document.querySelectorAll('.mode-tab').forEach(tab=>tab.addEventListener('click',()=>{
+  clearInterval(pomo.iv);pomo.running=false;pomo.mode=tab.dataset.mode;
+  pomo.total=parseInt(tab.dataset.mins)*60;pomo.rem=pomo.total;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');updateTimer();
+}));
+document.getElementById('timerStart').addEventListener('click',()=>{
+  if(pomo.running){clearInterval(pomo.iv);pomo.running=false;}
+  else{pomo.running=true;pomo.iv=setInterval(async()=>{
+    pomo.rem--;
+    if(pomo.rem<=0){
+      clearInterval(pomo.iv);pomo.running=false;
+      if(pomo.mode==='focus'){S.pomos.count++;await sSet('pomos',S.pomos);updateDots();updateStats();toast('Focus session complete! 🔥','🍅');}
+      else toast('Break over! Back to work 💪','⏰');
+    }
+    updateTimer();
+  },1000);}
+  updateTimer();
+});
+document.getElementById('timerReset').addEventListener('click',()=>{clearInterval(pomo.iv);pomo.running=false;pomo.rem=pomo.total;updateTimer();});
+
+// ── QUOTES ──
+let qi=Math.floor(Math.random()*QUOTES.length);
+function showQuote(){const q=QUOTES[qi];document.getElementById('quoteText').textContent=q.text;document.getElementById('quoteAuthor').textContent='— '+q.author;}
+document.getElementById('quoteRefresh').addEventListener('click',()=>{qi=(qi+1)%QUOTES.length;showQuote();});
+
+// ── THEME ──
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';}
+document.getElementById('themeBtn').addEventListener('click',async()=>{S.theme=S.theme==='dark'?'light':'dark';applyTheme(S.theme);await sSet('theme',S.theme);});
+
+// ── RESET ──
+document.getElementById('resetBtn').addEventListener('click',async()=>{
+  if(!confirm('Reset everything? All data will be cleared.'))return;
+  await Promise.all([sDel('studyLog'),sDel('attendance'),sDel('tasks'),sDel('pomos')]);
+  S.studyLog={};S.attendance=[];S.tasks=[];S.pomos={date:todayKey(),count:0};
+  clearInterval(pomo.iv);pomo.running=false;pomo.rem=pomo.total;
+  renderStudy();renderAtt();renderTasks();updateStats();updateTimer();updateDots();
+  toast('All data cleared','🗑️');
+});
+
+// ── INIT ──
+async function init(){
+  document.getElementById('dateChip').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+
+  const [sl,att,tasks,pomos,theme]=await Promise.all([
+    sGet('studyLog'),sGet('attendance'),sGet('tasks'),sGet('pomos'),sGet('theme')
+  ]);
+
+  S.studyLog = sl||{};
+  S.attendance = att||[];
+  S.tasks = tasks||[];
+  S.theme = theme||'dark';
+  S.pomos = (pomos&&pomos.date===todayKey())?pomos:{date:todayKey(),count:0};
+
+  applyTheme(S.theme);
+  renderStudy();renderAtt();renderTasks();updateStats();updateTimer();updateDots();showQuote();
+}
+
+init();
+</script>
+</body>
+</html>
